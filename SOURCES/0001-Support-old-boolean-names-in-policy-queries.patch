@@ -1,0 +1,94 @@
+From 97bd46865e12246c00517d1e07aabca530a305ac Mon Sep 17 00:00:00 2001
+From: Vit Mojzis <vmojzis@redhat.com>
+Date: Wed, 17 Jun 2020 13:34:19 +0200
+Subject: [PATCH] Support old boolean names in policy queries
+
+Translate old boolean names based on /etc/selinux/*/booleans.subs_dist
+file. The translation is only attempted when "policy" was not specified
+to avoid influencing queries of policies from other systems.
+
+Signed-off-by: Vit Mojzis <vmojzis@redhat.com>
+---
+ seinfo                        |  6 +++++-
+ sesearch                      |  7 ++++++-
+ setools/policyrep/selinux.pxd |  1 +
+ setools/policyrep/util.pxi    | 22 ++++++++++++++++++++++
+ 4 files changed, 34 insertions(+), 2 deletions(-)
+
+diff --git a/seinfo b/seinfo
+index d2caf7c..bc33e12 100755
+--- a/seinfo
++++ b/seinfo
+@@ -125,7 +125,11 @@ try:
+     if args.boolquery or args.all:
+         q = setools.BoolQuery(p)
+         if isinstance(args.boolquery, str):
+-            q.name = args.boolquery
++            if args.policy:
++                q.name = args.boolquery
++            else:
++                # try to find substitutions for old boolean names
++                q.name = setools.policyrep.lookup_boolean_name_sub(args.boolquery)
+ 
+         components.append(("Booleans", q, lambda x: x.statement()))
+ 
+diff --git a/sesearch b/sesearch
+index c4b1d38..733f3d3 100755
+--- a/sesearch
++++ b/sesearch
+@@ -189,7 +189,12 @@ try:
+             if args.boolean_regex:
+                 q.boolean = args.boolean
+             else:
+-                q.boolean = args.boolean.split(",")
++                if args.policy:
++                    q.boolean = args.boolean.split(",")
++                else:
++                    # try to find substitutions for old boolean names
++                    q.boolean = map(setools.policyrep.lookup_boolean_name_sub,
++                                    args.boolean.split(","))
+ 
+         for r in sorted(q.results()):
+             print(r)
+diff --git a/setools/policyrep/selinux.pxd b/setools/policyrep/selinux.pxd
+index a2e8af0..1686831 100644
+--- a/setools/policyrep/selinux.pxd
++++ b/setools/policyrep/selinux.pxd
+@@ -24,3 +24,4 @@ cdef extern from "<selinux/selinux.h>":
+     bint selinuxfs_exists()
+     const char* selinux_current_policy_path()
+     const char* selinux_binary_policy_path()
++    char* selinux_boolean_sub(const char *boolean_name);
+diff --git a/setools/policyrep/util.pxi b/setools/policyrep/util.pxi
+index 40f21a7..abc7be8 100644
+--- a/setools/policyrep/util.pxi
++++ b/setools/policyrep/util.pxi
+@@ -230,3 +230,25 @@ cdef flatten_list(input_list):
+             ret.append(i)
+ 
+     return ret
++
++
++def lookup_boolean_name_sub(name):
++    """
++    Read the /etc/selinux/TYPE/booleans.subs_dist file looking
++    for a record with 'name'.
++    Return the translated name if a corresponding substitution exists,
++    otherwise return the original name.
++    """
++    cdef:
++        char *_name = selinux.selinux_boolean_sub(name)
++        str new_name = name
++
++    if _name == NULL:
++        raise MemoryError
++    # cast "char *" to "str" and free
++    try:
++        new_name = _name
++    finally:
++        free(_name)
++
++    return new_name
+-- 
+2.25.4
+

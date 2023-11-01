@@ -1,0 +1,90 @@
+From 4e6f6c95cfe7ca4a3a9d9e0dbd6e23e4bac2449c Mon Sep 17 00:00:00 2001
+From: Petr Lautrbach <plautrba@redhat.com>
+Date: Thu, 18 Nov 2021 13:59:08 +0100
+Subject: [PATCH] Make seinfo output predictable
+
+There are few places where frozenset is used. Given that frozenset is an unordered
+collection the output generated from this is unpredictable.
+
+The following command outputs are fixed using sorted() on frozensets:
+
+    seinfo --constrain
+    seinfo --common
+    seinfo -c -x
+    seinfo -r -x
+    seinfo -u -x
+
+Fixes: https://github.com/SELinuxProject/setools/issues/65
+
+Signed-off-by: Petr Lautrbach <plautrba@redhat.com>
+---
+ setools/policyrep/constraint.pxi | 2 +-
+ setools/policyrep/objclass.pxi   | 4 ++--
+ setools/policyrep/role.pxi       | 2 +-
+ setools/policyrep/user.pxi       | 2 +-
+ 4 files changed, 5 insertions(+), 5 deletions(-)
+
+diff --git a/setools/policyrep/constraint.pxi b/setools/policyrep/constraint.pxi
+index d5221a1..77c3e2e 100644
+--- a/setools/policyrep/constraint.pxi
++++ b/setools/policyrep/constraint.pxi
+@@ -66,7 +66,7 @@ cdef class Constraint(BaseConstraint):
+ 
+     def statement(self):
+         if len(self.perms) > 1:
+-            perms = "{{ {0} }}".format(' '.join(self.perms))
++            perms = "{{ {0} }}".format(' '.join(sorted(self.perms)))
+         else:
+             # convert to list since sets cannot be indexed
+             perms = list(self.perms)[0]
+diff --git a/setools/policyrep/objclass.pxi b/setools/policyrep/objclass.pxi
+index b7ec7b7..8ed2be5 100644
+--- a/setools/policyrep/objclass.pxi
++++ b/setools/policyrep/objclass.pxi
+@@ -75,7 +75,7 @@ cdef class Common(PolicySymbol):
+         return other in self.perms
+ 
+     def statement(self):
+-        return "common {0}\n{{\n\t{1}\n}}".format(self, '\n\t'.join(self.perms))
++        return "common {0}\n{{\n\t{1}\n}}".format(self, '\n\t'.join(sorted(self.perms)))
+ 
+ 
+ cdef class ObjClass(PolicySymbol):
+@@ -204,7 +204,7 @@ cdef class ObjClass(PolicySymbol):
+ 
+         # a class that inherits may not have additional permissions
+         if len(self.perms) > 0:
+-            stmt += "{{\n\t{0}\n}}".format('\n\t'.join(self.perms))
++            stmt += "{{\n\t{0}\n}}".format('\n\t'.join(sorted(self.perms)))
+ 
+         return stmt
+ 
+diff --git a/setools/policyrep/role.pxi b/setools/policyrep/role.pxi
+index 9a0dd39..3af8a3f 100644
+--- a/setools/policyrep/role.pxi
++++ b/setools/policyrep/role.pxi
+@@ -58,7 +58,7 @@ cdef class Role(PolicySymbol):
+         if count == 1:
+             stmt += " types {0}".format(types[0])
+         else:
+-            stmt += " types {{ {0} }}".format(' '.join(types))
++            stmt += " types {{ {0} }}".format(' '.join(sorted(types)))
+ 
+         stmt += ";"
+         return stmt
+diff --git a/setools/policyrep/user.pxi b/setools/policyrep/user.pxi
+index 9c82aa9..e37af29 100644
+--- a/setools/policyrep/user.pxi
++++ b/setools/policyrep/user.pxi
+@@ -81,7 +81,7 @@ cdef class User(PolicySymbol):
+         if count == 1:
+             stmt += roles[0]
+         else:
+-            stmt += "{{ {0} }}".format(' '.join(roles))
++            stmt += "{{ {0} }}".format(' '.join(sorted(roles)))
+ 
+         if self._level:
+             stmt += " level {0.mls_level} range {0.mls_range};".format(self)
+-- 
+2.30.2
+
