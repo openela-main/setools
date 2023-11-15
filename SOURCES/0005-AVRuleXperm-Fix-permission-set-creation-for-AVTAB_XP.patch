@@ -1,0 +1,259 @@
+From ec4f5e19ea94e42416fda103d94118577eb18b95 Mon Sep 17 00:00:00 2001
+From: Chris PeBenito <chpebeni@linux.microsoft.com>
+Date: Tue, 30 Aug 2022 13:58:54 -0400
+Subject: [PATCH] AVRuleXperm: Fix permission set creation for
+ AVTAB_XPERMS_IOCTLDRIVER.
+
+Closes #74
+
+Signed-off-by: Chris PeBenito <chpebeni@linux.microsoft.com>
+---
+ setools/policyrep/terule.pxi        |   8 +-
+ tests/policyrep/terule.py           |  26 +++++
+ tests/policyrep/terule_issue74.conf | 159 ++++++++++++++++++++++++++++
+ 3 files changed, 189 insertions(+), 4 deletions(-)
+ create mode 100644 tests/policyrep/terule_issue74.conf
+
+diff --git a/setools/policyrep/terule.pxi b/setools/policyrep/terule.pxi
+index 59aeea5..8b2659b 100644
+--- a/setools/policyrep/terule.pxi
++++ b/setools/policyrep/terule.pxi
+@@ -282,22 +282,22 @@ cdef class AVRuleXperm(BaseTERule):
+             set perms = set()
+             size_t curr = 0
+             size_t len = sizeof(xperms.perms) * sepol.EXTENDED_PERMS_LEN
++            size_t base_value = 0
+ 
+         #
+         # Build permission set
+         #
+-        while curr < len:
++        for curr in range(len):
+             if sepol.xperm_test(curr, xperms.perms):
+                 if xperms.specified & sepol.AVTAB_XPERMS_IOCTLFUNCTION:
+                     perms.add(xperms.driver << 8 | curr)
+                 elif xperms.specified & sepol.AVTAB_XPERMS_IOCTLDRIVER:
+-                    perms.add(curr << 8)
++                    base_value = curr << 8
++                    perms.update(range(base_value, base_value + 0x100))
+                 else:
+                     raise LowLevelPolicyError("Unknown extended permission: {}".format(
+                                               xperms.specified))
+ 
+-            curr += 1
+-
+         #
+         # Determine xperm type
+         #
+diff --git a/tests/policyrep/terule.py b/tests/policyrep/terule.py
+index 0f24054..30afd4b 100644
+--- a/tests/policyrep/terule.py
++++ b/tests/policyrep/terule.py
+@@ -24,6 +24,8 @@ from setools import SELinuxPolicy
+ from setools.exception import InvalidTERuleType, RuleNotConditional, RuleUseError, \
+     TERuleNoFilename
+ 
++from .util import compile_policy
++
+ 
+ @unittest.skip("Needs to be reworked for cython")
+ @patch('setools.policyrep.boolcond.condexpr_factory', lambda x, y: y)
+@@ -262,6 +264,30 @@ class AVRuleXpermTest(unittest.TestCase):
+         self.assertEqual(rule.statement(), "allowxperm a b:c d { 0x0003-0x0005 0x0007-0x0009 };")
+ 
+ 
++class AVRuleXpermTestIssue74(unittest.TestCase):
++
++    """
++    Regression test for xperm ranges starting with 0x00 not being loaded.
++    https://github.com/SELinuxProject/setools/issues/74
++    """
++
++    @classmethod
++    def setUpClass(cls):
++        cls.p = compile_policy("tests/policyrep/terule_issue74.conf")
++
++    def test_issue74_regression(self):
++        """Regression test for GitHub issue 74."""
++        rules = sorted(self.p.terules())
++        print(rules)
++        self.assertEqual(2, len(rules))
++
++        # expect 2 rules:
++        # allowxperm init_type_t init_type_t : unix_dgram_socket ioctl { 0x8910 };
++        # allowxperm init_type_t init_type_t : unix_dgram_socket ioctl { 0x0-0xff };
++        self.assertSetEqual(set(range(0x100)), rules[0].perms)
++        self.assertSetEqual(set([0x8910]), rules[1].perms)
++
++
+ @unittest.skip("Needs to be reworked for cython")
+ @patch('setools.policyrep.boolcond.condexpr_factory', lambda x, y: y)
+ @patch('setools.policyrep.typeattr.type_factory', lambda x, y: y)
+diff --git a/tests/policyrep/terule_issue74.conf b/tests/policyrep/terule_issue74.conf
+new file mode 100644
+index 0000000..158a38e
+--- /dev/null
++++ b/tests/policyrep/terule_issue74.conf
+@@ -0,0 +1,159 @@
++class infoflow
++class infoflow2
++class infoflow3
++class infoflow4
++class infoflow5
++class infoflow6
++class infoflow7
++class infoflow8
++class infoflow9
++class infoflow10
++class unix_dgram_socket
++
++sid kernel
++sid security
++
++common infoflow
++{
++	low_w
++	med_w
++	hi_w
++	low_r
++	med_r
++	hi_r
++}
++
++common com_a
++{
++    hi_w
++    hi_r
++    super_r
++    super_w
++}
++
++common com_b
++{
++    send
++    recv
++}
++
++common com_c
++{
++    getattr
++    setattr
++    read
++    write
++}
++
++class infoflow
++inherits infoflow
++
++class infoflow2
++inherits infoflow
++{
++	super_w
++	super_r
++}
++
++class infoflow3
++{
++	null
++}
++
++class infoflow4
++inherits infoflow
++{
++	super_w
++	super_r
++	super_none
++	super_both
++	super_unmapped
++}
++
++class infoflow5
++inherits com_a
++
++class infoflow6
++inherits com_b
++
++class infoflow7
++inherits infoflow
++{
++    unmapped
++}
++
++class infoflow8
++{
++	super_w
++	super_r
++}
++
++class infoflow9
++inherits com_c
++
++class infoflow10
++{
++    read
++    write
++}
++
++class unix_dgram_socket
++{
++    ioctl
++}
++
++sensitivity low_s;
++sensitivity medium_s alias med;
++sensitivity high_s;
++
++dominance { low_s med high_s }
++
++category here;
++category there;
++category elsewhere alias lost;
++
++#level decl
++level low_s:here.there;
++level med:here, elsewhere;
++level high_s:here.lost;
++
++#some constraints
++mlsconstrain infoflow hi_r ((l1 dom l2) or (t1 == mls_exempt));
++
++attribute mls_exempt;
++
++type system;
++role system;
++role system types system;
++
++type init_type_t;
++allowxperm init_type_t self:unix_dgram_socket ioctl 0x8910;
++allowxperm init_type_t self:unix_dgram_socket ioctl { 0x0000 - 0x00ff };
++
++#users
++user system roles system level med range low_s - high_s:here.lost;
++
++#normal constraints
++constrain infoflow hi_w (u1 == u2);
++
++#isids
++sid kernel system:system:system:medium_s:here
++sid security system:system:system:high_s:lost
++
++#fs_use
++fs_use_trans devpts system:object_r:system:low_s;
++fs_use_xattr ext3 system:object_r:system:low_s;
++fs_use_task pipefs system:object_r:system:low_s;
++
++#genfscon
++genfscon proc / system:object_r:system:med
++genfscon proc /sys system:object_r:system:low_s
++genfscon selinuxfs / system:object_r:system:high_s:here.there
++
++portcon tcp 80 system:object_r:system:low_s
++
++netifcon eth0 system:object_r:system:low_s system:object_r:system:low_s
++
++nodecon 127.0.0.1 255.255.255.255 system:object_r:system:low_s:here
++nodecon ::1 ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff system:object_r:system:low_s:here
++
+-- 
+2.41.0
+

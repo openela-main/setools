@@ -1,0 +1,93 @@
+From d249ea3316fcfaa203055d2b1f2c52423216e7e7 Mon Sep 17 00:00:00 2001
+From: Petr Lautrbach <plautrba@redhat.com>
+Date: Tue, 30 Jul 2019 17:13:44 +0200
+Subject: [PATCH] Do not use NoteNotFound as it's not implemented in networkx-1
+
+---
+ setools/dta.py      | 8 ++++----
+ setools/infoflow.py | 8 ++++----
+ 2 files changed, 8 insertions(+), 8 deletions(-)
+
+diff --git a/setools/dta.py b/setools/dta.py
+index 3239d2d..e15d8b8 100644
+--- a/setools/dta.py
++++ b/setools/dta.py
+@@ -24,7 +24,7 @@ from collections import defaultdict, namedtuple
+ from contextlib import suppress
+ 
+ import networkx as nx
+-from networkx.exception import NetworkXError, NetworkXNoPath, NodeNotFound
++from networkx.exception import NetworkXError, NetworkXNoPath
+ 
+ from .descriptors import EdgeAttrDict, EdgeAttrList
+ from .policyrep import TERuletype
+@@ -111,7 +111,7 @@ class DomainTransitionAnalysis:
+ 
+         self.log.info("Generating one domain transition path from {0} to {1}...".format(s, t))
+ 
+-        with suppress(NetworkXNoPath, NodeNotFound):
++        with suppress(NetworkXNoPath):
+             # NodeNotFound: the type is valid but not in graph, e.g. excluded
+             # NetworkXNoPath: no paths or the target type is
+             # not in the graph
+@@ -146,7 +146,7 @@ class DomainTransitionAnalysis:
+         self.log.info("Generating all domain transition paths from {0} to {1}, max length {2}...".
+                       format(s, t, maxlen))
+ 
+-        with suppress(NetworkXNoPath, NodeNotFound):
++        with suppress(NetworkXNoPath):
+             # NodeNotFound: the type is valid but not in graph, e.g. excluded
+             # NetworkXNoPath: no paths or the target type is
+             # not in the graph
+@@ -177,7 +177,7 @@ class DomainTransitionAnalysis:
+         self.log.info("Generating all shortest domain transition paths from {0} to {1}...".
+                       format(s, t))
+ 
+-        with suppress(NetworkXNoPath, NodeNotFound):
++        with suppress(NetworkXNoPath):
+             # NodeNotFound: the type is valid but not in graph, e.g. excluded
+             # NetworkXNoPath: no paths or the target type is
+             # not in the graph
+diff --git a/setools/infoflow.py b/setools/infoflow.py
+index 579e064..89e5c8e 100644
+--- a/setools/infoflow.py
++++ b/setools/infoflow.py
+@@ -21,7 +21,7 @@ import logging
+ from contextlib import suppress
+ 
+ import networkx as nx
+-from networkx.exception import NetworkXError, NetworkXNoPath, NodeNotFound
++from networkx.exception import NetworkXError, NetworkXNoPath
+ 
+ from .descriptors import EdgeAttrIntMax, EdgeAttrList
+ from .exception import RuleNotConditional
+@@ -124,7 +124,7 @@ class InfoFlowAnalysis:
+         self.log.info("Generating one shortest information flow path from {0} to {1}...".
+                       format(s, t))
+ 
+-        with suppress(NetworkXNoPath, NodeNotFound):
++        with suppress(NetworkXNoPath):
+             # NodeNotFound: the type is valid but not in graph, e.g.
+             # excluded or disconnected due to min weight
+             # NetworkXNoPath: no paths or the target type is
+@@ -163,7 +163,7 @@ class InfoFlowAnalysis:
+         self.log.info("Generating all information flow paths from {0} to {1}, max length {2}...".
+                       format(s, t, maxlen))
+ 
+-        with suppress(NetworkXNoPath, NodeNotFound):
++        with suppress(NetworkXNoPath):
+             # NodeNotFound: the type is valid but not in graph, e.g.
+             # excluded or disconnected due to min weight
+             # NetworkXNoPath: no paths or the target type is
+@@ -197,7 +197,7 @@ class InfoFlowAnalysis:
+         self.log.info("Generating all shortest information flow paths from {0} to {1}...".
+                       format(s, t))
+ 
+-        with suppress(NetworkXNoPath, NodeNotFound):
++        with suppress(NetworkXNoPath):
+             # NodeNotFound: the type is valid but not in graph, e.g.
+             # excluded or disconnected due to min weight
+             # NetworkXNoPath: no paths or the target type is
+-- 
+2.25.1
+

@@ -1,0 +1,49 @@
+From 8d98b324fabcad6b09f9c734f79e6da9f9e85786 Mon Sep 17 00:00:00 2001
+From: rpm-build <rpm-build>
+Date: Thu, 23 Feb 2017 08:17:07 +0100
+Subject: [PATCH] Do not use -Werror during build
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+There are new warnings when setools are built with gcc 7 therefore we
+want to suppress -Werror for now
+
+Fixes:
+libqpol/policy_extend.c: In function ‘policy_extend’:
+libqpol/policy_extend.c:161:27: error: ‘%04zd’ directive output may be truncated writing between 4 and 10 bytes into a region of size 5 [-Werror=format-truncation=]
+    snprintf(buff, 9, "@ttr%04zd", i + 1);
+                           ^~~~~
+libqpol/policy_extend.c:161:22: note: directive argument in the range [1, 4294967295]
+    snprintf(buff, 9, "@ttr%04zd", i + 1);
+                      ^~~~~~~~~~~
+In file included from /usr/include/stdio.h:939:0,
+                 from /usr/include/sepol/policydb/policydb.h:53,
+                 from libqpol/policy_extend.c:29:
+/usr/include/bits/stdio2.h:64:10: note: ‘__builtin___snprintf_chk’ output between 9 and 15 bytes into a destination of size 9
+   return __builtin___snprintf_chk (__s, __n, __USE_FORTIFY_LEVEL - 1,
+          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        __bos (__s), __fmt, __va_arg_pack ());
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+cc1: all warnings being treated as errors
+error: command 'gcc' failed with exit status 1
+---
+ setup.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/setup.py b/setup.py
+index 457c830..4dcb301 100644
+--- a/setup.py
++++ b/setup.py
+@@ -106,7 +106,7 @@ ext_py_mods = [Extension('setools.policyrep', ['setools/policyrep.pyx'],
+                          libraries=['selinux', 'sepol'],
+                          library_dirs=lib_dirs,
+                          define_macros=macros,
+-                         extra_compile_args=['-Werror', '-Wextra',
++                         extra_compile_args=['-Wextra',
+                                              '-Waggregate-return',
+                                              '-Wfloat-equal',
+                                              '-Wformat', '-Wformat=2',
+-- 
+2.25.1
+
