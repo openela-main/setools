@@ -1,0 +1,114 @@
+From 92b692452d07d67b1d901baf36798cab8e36077a Mon Sep 17 00:00:00 2001
+From: Chris PeBenito <chpebeni@linux.microsoft.com>
+Date: Mon, 3 Apr 2023 09:13:31 -0400
+Subject: [PATCH] Disable/remove neverallow options in frontends.
+
+These rules are not available in the binary policy. Keep library support in
+case this changes in the future.
+
+Signed-off-by: Chris PeBenito <chpebeni@linux.microsoft.com>
+---
+ man/ru/sesearch.1              |  4 ----
+ man/sesearch.1                 |  4 ----
+ sesearch                       | 12 ++++++------
+ setoolsgui/apol/terulequery.ui | 12 ++++++++++++
+ 4 files changed, 18 insertions(+), 14 deletions(-)
+
+diff --git a/man/ru/sesearch.1 b/man/ru/sesearch.1
+index df6f449..2f86f9c 100644
+--- a/man/ru/sesearch.1
++++ b/man/ru/sesearch.1
+@@ -35,16 +35,12 @@ sesearch \- утилита опроса политики SELinux
+ Найти правила включения журналирования событий.
+ .IP "--dontaudit"
+ Найти правила запрета журналирования событий.
+-.IP "--neverallow"
+-Найти запрещающие правила.
+ .IP "--allowxperm"
+ Найти расширенные разрешительные правила.
+ .IP "--auditallowxperm"
+ Найти расширенные правила включения журналирования событий.
+ .IP "--dontauditxperm"
+ Найти расширенные правила запрета журналирования событий.
+-.IP "--neverallowxperm"
+-Найти расширенные запрещающие правила.
+ .IP "-T, --type_trans"
+ Найти правила перехода типов.
+ .IP "--type_member"
+diff --git a/man/sesearch.1 b/man/sesearch.1
+index 65eebf9..97e9110 100644
+--- a/man/sesearch.1
++++ b/man/sesearch.1
+@@ -30,16 +30,12 @@ Find allow rules.
+ Find auditallow rules.
+ .IP "--dontaudit"
+ Find dontaudit rules.
+-.IP "--neverallow"
+-Find neverallow rules.
+ .IP "--allowxperm"
+ Find allowxperm rules.
+ .IP "--auditallowxperm"
+ Find auditallowxperm rules.
+ .IP "--dontauditxperm"
+ Find dontauditxperm rules.
+-.IP "--neverallowxperm"
+-Find neverallowxperm rules.
+ .IP "-T, --type_trans"
+ Find type_transition rules.
+ .IP "--type_member"
+diff --git a/sesearch b/sesearch
+index 733f3d3..7caa41d 100755
+--- a/sesearch
++++ b/sesearch
+@@ -54,12 +54,12 @@ rtypes.add_argument("--dontaudit", action="append_const",
+ rtypes.add_argument("--dontauditxperm", action="append_const",
+                     const=setools.TERuletype.dontauditxperm, dest="tertypes",
+                     help="Search dontauditxperm rules.")
+-rtypes.add_argument("--neverallow", action="append_const",
+-                    const=setools.TERuletype.neverallow, dest="tertypes",
+-                    help="Search neverallow rules.")
+-rtypes.add_argument("--neverallowxperm", action="append_const",
+-                    const=setools.TERuletype.neverallowxperm, dest="tertypes",
+-                    help="Search neverallowxperm rules.")
++# rtypes.add_argument("--neverallow", action="append_const",
++#                    const=setools.TERuletype.neverallow, dest="tertypes",
++#                    help="Search neverallow rules.")
++# rtypes.add_argument("--neverallowxperm", action="append_const",
++#                    const=setools.TERuletype.neverallowxperm, dest="tertypes",
++#                    help="Search neverallowxperm rules.")
+ rtypes.add_argument("-T", "--type_trans", action="append_const",
+                     const=setools.TERuletype.type_transition, dest="tertypes",
+                     help="Search type_transition rules.")
+diff --git a/setoolsgui/apol/terulequery.ui b/setoolsgui/apol/terulequery.ui
+index 950c590..6c6f14f 100644
+--- a/setoolsgui/apol/terulequery.ui
++++ b/setoolsgui/apol/terulequery.ui
+@@ -465,6 +465,12 @@
+           </item>
+           <item row="0" column="1">
+            <widget class="QCheckBox" name="neverallow">
++            <property name="enabled">
++             <bool>false</bool>
++            </property>
++            <property name="toolTip">
++             <string>Neverallow is not available in binary policies.</string>
++            </property>
+             <property name="text">
+              <string>Neverallow</string>
+             </property>
+@@ -482,6 +488,12 @@
+           </item>
+           <item row="1" column="1">
+            <widget class="QCheckBox" name="neverallowxperm">
++            <property name="enabled">
++             <bool>false</bool>
++            </property>
++            <property name="toolTip">
++             <string>Neverallowxperms is not available in binary policies.</string>
++            </property>
+             <property name="text">
+              <string>Neverallowxperms</string>
+             </property>
+-- 
+2.40.0
+

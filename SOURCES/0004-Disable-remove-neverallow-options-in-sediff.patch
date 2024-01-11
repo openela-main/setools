@@ -1,0 +1,91 @@
+From 158283058160f4ae40d0b215e0ff2e5045de5a28 Mon Sep 17 00:00:00 2001
+From: Petr Lautrbach <lautrbach@redhat.com>
+Date: Tue, 9 May 2023 19:22:01 +0200
+Subject: [PATCH] Disable/remove neverallow options in sediff.
+
+Apply change from commit 06335957b701 ("Disable/remove neverallow
+options in frontends.") to sediff
+
+Signed-off-by: Petr Lautrbach <lautrbach@redhat.com>
+---
+ man/ru/sediff.1 |  4 ----
+ man/sediff.1    |  4 ----
+ sediff          | 10 +++++++---
+ 3 files changed, 7 insertions(+), 11 deletions(-)
+
+diff --git a/man/ru/sediff.1 b/man/ru/sediff.1
+index c6bf293..af5d8ef 100644
+--- a/man/ru/sediff.1
++++ b/man/ru/sediff.1
+@@ -57,16 +57,12 @@ sediff \- утилита выявления различий политик SELi
+ Найти различия правил включения журналирования событий.
+ .IP "--dontaudit"
+ Найти различия правил запрета журналирования событий.
+-.IP "--neverallow"
+-Найти различия запрещающих правил.
+ .IP "--allowxperm"
+ Найти различия расширенных разрешительных правил.
+ .IP "--auditallowxperm"
+ Найти различия расширенных правил включения журналирования событий.
+ .IP "--dontauditxperm"
+ Найти различия расширенных правил запрета журналирования событий.
+-.IP "--neverallowxperm"
+-Найти различия расширенных запрещающих правил.
+ .IP "-T, --type_trans"
+ Найти различия правил перехода типов.
+ .IP "--type_member"
+diff --git a/man/sediff.1 b/man/sediff.1
+index ed3b497..18466d8 100644
+--- a/man/sediff.1
++++ b/man/sediff.1
+@@ -50,16 +50,12 @@ Find differences in allow rules.
+ Find differences in auditallow rules.
+ .IP "--dontaudit"
+ Find differences in dontaudit rules.
+-.IP "--neverallow"
+-Find differences in neverallow rules.
+ .IP "--allowxperm"
+ Find differences in allowxperm rules.
+ .IP "--auditallowxperm"
+ Find differences in auditallowxperm rules.
+ .IP "--dontauditxperm"
+ Find differences in dontauditxperm rules.
+-.IP "--neverallowxperm"
+-Find differences in neverallowxperm rules.
+ .IP "-T, --type_trans"
+ Find differences in type_transition rules.
+ .IP "--type_member"
+diff --git a/sediff b/sediff
+index d31fa3a..93af837 100755
+--- a/sediff
++++ b/sediff
+@@ -57,12 +57,12 @@ comp.add_argument("--level", action="store_true", help="Print MLS level definiti
+ terule = parser.add_argument_group("type enforcement rule differences")
+ terule.add_argument("-A", action="store_true", help="Print allow and allowxperm rule differences")
+ terule.add_argument("--allow", action="store_true", help="Print allow rule differences")
+-terule.add_argument("--neverallow", action="store_true", help="Print neverallow rule differences")
++# terule.add_argument("--neverallow", action="store_true", help="Print neverallow rule differences")
+ terule.add_argument("--auditallow", action="store_true", help="Print auditallow rule differences")
+ terule.add_argument("--dontaudit", action="store_true", help="Print dontaudit rule differences")
+ terule.add_argument("--allowxperm", action="store_true", help="Print allowxperm rule differences")
+-terule.add_argument("--neverallowxperm", action="store_true",
+-                    help="Print neverallowxperm rule differences")
++# terule.add_argument("--neverallowxperm", action="store_true",
++#                     help="Print neverallowxperm rule differences")
+ terule.add_argument("--auditallowxperm", action="store_true",
+                     help="Print auditallowxperm rule differences")
+ terule.add_argument("--dontauditxperm", action="store_true",
+@@ -109,6 +109,10 @@ other.add_argument("--typebounds", action="store_true", help="Print typebounds d
+ 
+ args = parser.parse_args()
+ 
++# neverallow and neverallowxperm options are disabled
++args.neverallow = False
++args.neverallowxperm = False
++
+ if args.A:
+     args.allow = True
+     args.allowxperm = True
+-- 
+2.41.0
+

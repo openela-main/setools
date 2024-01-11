@@ -8,7 +8,7 @@
 
 Name:           setools
 Version:        4.3.0
-Release:        3%{?setools_pre_ver:.%{setools_pre_ver}}%{?dist}
+Release:        5%{?setools_pre_ver:.%{setools_pre_ver}}%{?dist}
 Summary:        Policy analysis tools for SELinux
 
 License:        GPLv2
@@ -18,6 +18,9 @@ Source1:        setools.pam
 Source2:        apol.desktop
 Patch0001:      0001-Support-old-boolean-names-in-policy-queries.patch
 Patch0002:      0002-Make-seinfo-output-predictable.patch
+Patch0003:      0003-Disable-remove-neverallow-options-in-frontends.patch
+Patch0004:      0004-Disable-remove-neverallow-options-in-sediff.patch
+Patch0005:      0005-AVRuleXperm-Fix-permission-set-creation-for-AVTAB_XP.patch
 Patch1001:      1001-Do-not-use-Werror-during-build.patch
 Patch1002:      1002-Do-not-export-use-setools.InfoFlowAnalysis-and-setoo.patch
 Patch1003:      1003-Require-networkx-on-package-level.patch
@@ -176,7 +179,14 @@ rm -rf %{buildroot}%{_bindir}/apol %{buildroot}%{python3_sitearch}/setoolsgui \
 %endif
 
 %changelog
-* Tue Nov 30 2021 Vit Mojzis <vmojzis@redhat.com> - 4.3.0-3}
+* Mon Aug 21 2023 Vit Mojzis <vmojzis@redhat.com> - 4.3.0-5
+- Disable/remove neverallow options in sediff (#2184141)
+
+* Mon Jun 19 2023 Vit Mojzis <vmojzis@redhat.com> - 4.3.0-4
+- Disable/remove neverallow options in frontends (#2184141)
+- AVRuleXperm: Fix permission set creation for AVTAB_XPERMS_IOCTLDRIVER (#2174376)
+
+* Tue Nov 30 2021 Vit Mojzis <vmojzis@redhat.com> - 4.3.0-3
 - Make seinfo output predictable (#2019961)
 
 * Tue Jun 30 2020 Vit Mojzis <vmojzis@redhat.com> - 4.3.0-2
