@@ -1,8 +1,8 @@
-%global sepol_ver 3.4-1
-%global selinux_ver 3.4-1
+%global sepol_ver 3.5-1
+%global selinux_ver 3.5-1
 
 Name:           setools
-Version:        4.4.1
+Version:        4.4.3
 Release:        1%{?dist}
 Summary:        Policy analysis tools for SELinux
 
@@ -11,8 +11,7 @@ URL:            https://github.com/SELinuxProject/setools/wiki
 Source0:        https://github.com/SELinuxProject/setools/archive/%{version}.tar.gz
 Source1:        setools.pam
 Source2:        apol.desktop
-Patch0001:      0001-Make-NetworkX-optional.patch
-Patch1003:      1003-Require-networkx-on-package-level.patch
+
 Obsoletes:      setools < 4.0.0, setools-devel < 4.0.0
 BuildRequires:  flex,  bison
 BuildRequires:  glibc-devel, gcc, git-core
@@ -145,6 +144,20 @@ Python modules designed to facilitate SELinux policy analysis.
 %{_mandir}/ru/man1/apol*
 
 %changelog
+* Mon Aug 14 2023 Petr Lautrbach <lautrbach@redhat.com> - 4.4.3-1
+- SETools 4.4.3 release
+- Improve man pages
+- seinfoflow: Add -r option to get flows into the source type.
+- seinfoflow.1: Remove references to sepolgen permission map.
+- AVRule/AVRuleXperm: Treat rules with no permissions as invalid policy.
+- SELinuxPolicy: Add explicit cast for libspol message
+
+* Wed May 10 2023 Petr Lautrbach <lautrbach@redhat.com> - 4.4.2-2.1
+- Disable sediff --neverallow and --neverallowxperm options
+
+* Thu Apr 20 2023 Petr Lautrbach <lautrbach@redhat.com> - 4.4.2-1
+- SETools 4.4.2 release
+
 * Mon Feb  6 2023 Petr Lautrbach <lautrbach@redhat.com> - 4.4.1-1
 - SETools 4.4.1 release
 
