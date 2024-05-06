@@ -2,7 +2,7 @@
 %global selinux_ver 3.5-1
 
 Name:           setools
-Version:        4.4.3
+Version:        4.4.4
 Release:        1%{?dist}
 Summary:        Policy analysis tools for SELinux
 
@@ -144,6 +144,9 @@ Python modules designed to facilitate SELinux policy analysis.
 %{_mandir}/ru/man1/apol*
 
 %changelog
+* Tue Dec 12 2023 Petr Lautrbach <lautrbach@redhat.com> - 4.4.4-1
+- SETools 4.4.4 release
+
 * Mon Aug 14 2023 Petr Lautrbach <lautrbach@redhat.com> - 4.4.3-1
 - SETools 4.4.3 release
 - Improve man pages
