@@ -1,9 +1,9 @@
-%global sepol_ver 3.9
-%global selinux_ver 3.9
+%global sepol_ver 3.10
+%global selinux_ver 3.10
 
 Name:           setools
-Version:        4.5.1
-Release:        5%{?dist}
+Version:        4.6.0
+Release:        3%{?dist}
 Summary:        Policy analysis tools for SELinux
 
 License:        GPL-2.0-only AND LGPL-2.1-only
@@ -12,6 +12,11 @@ Source0:        https://github.com/SELinuxProject/setools/archive/%{version}.tar
 Source1:        setools.pam
 Source2:        apol.desktop
 
+# Remove redundant runtime requirement on setuptools
+Patch:          https://github.com/SELinuxProject/setools/pull/156.patch
+# Fix seinfo argument parsing when policy path follows query
+Patch:          https://github.com/SELinuxProject/setools/pull/157.patch
+
 Obsoletes:      setools < 4.0.0, setools-devel < 4.0.0
 BuildRequires:  flex,  bison
 BuildRequires:  glibc-devel, gcc, git-core
@@ -19,7 +24,6 @@ BuildRequires:  libsepol-devel >= %{sepol_ver}, libsepol-static >= %{sepol_ver}
 BuildRequires:  swig
 BuildRequires:  python3-Cython
 BuildRequires:  python3-devel
-BuildRequires:  python3-setuptools
 BuildRequires:  libselinux-devel
 
 Requires:       %{name}-console = %{version}-%{release}
@@ -68,8 +72,6 @@ This package includes the following console tools:
 Summary:     Policy analysis tools for SELinux
 License:     LGPL-2.1-only
 Obsoletes:   setools-libs < 4.0.0
-%{?python_provide:%python_provide python3-setools}
-Requires:    python3-setuptools
 
 %description -n python3-setools
 SETools is a collection of graphical tools, command-line tools, and
@@ -92,16 +94,21 @@ Python modules designed to facilitate SELinux policy analysis.
 %autosetup -p 1 -S git -n setools-%{version}
 
 
+%generate_buildrequires
+%pyproject_buildrequires
+
+
 %build
-%py3_build
+%pyproject_wheel
 
 
 %install
-%py3_install
+%pyproject_install
 
 %check
 %if %{?_with_check:1}%{!?_with_check:0}
-%{__python3} setup.py test
+# dnf install python3-pytest python3-pytest-qt
+%pytest
 %endif
 
 
@@ -143,6 +150,16 @@ Python modules designed to facilitate SELinux policy analysis.
 %{_mandir}/ru/man1/apol*
 
 %changelog
+* Tue Feb 17 2026 Vit Mojzis <vmojzis@redhat.com> - 4.6.0-3
+- Rebuild for SELinux userspace 3.10 (RHEL-150462)
+
+* Wed Dec 03 2025 Veronika Syncakova <vsyncako@redhat.com> - 4.6.0-2
+- Fix seinfo argument parsing when policy path follows query options (RHEL-118641)
+
+* Thu Oct 23 2025 Vit Mojzis <vmojzis@redhat.com> - 4.6.0-1
+- SETools 4.6.0
+- Drop redundant runtime requirement on python3-setuptools (redux)
+
 * Wed Jul 23 2025 Vit Mojzis <vmojzis@redhat.com> - 4.5.1-5
 - Rebuild for SELinux userspace 3.9 (RHEL-104006)
 
