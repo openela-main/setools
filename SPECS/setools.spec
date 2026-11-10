@@ -1,9 +1,14 @@
-%global sepol_ver 3.10
-%global selinux_ver 3.10
+%global sepol_ver 3.11
+%global selinux_ver 3.11
+
+# setools-mcp requires python3-fastmcp which is not available on RHEL
+%if 0%{?fedora}
+%global with_mcp 1
+%endif
 
 Name:           setools
-Version:        4.6.0
-Release:        3%{?dist}
+Version:        4.7.1
+Release:        1.1%{?dist}
 Summary:        Policy analysis tools for SELinux
 
 License:        GPL-2.0-only AND LGPL-2.1-only
@@ -12,16 +17,11 @@ Source0:        https://github.com/SELinuxProject/setools/archive/%{version}.tar
 Source1:        setools.pam
 Source2:        apol.desktop
 
-# Remove redundant runtime requirement on setuptools
-Patch:          https://github.com/SELinuxProject/setools/pull/156.patch
-# Fix seinfo argument parsing when policy path follows query
-Patch:          https://github.com/SELinuxProject/setools/pull/157.patch
+Patch:          0001-pyproject.toml-Fix-build-with-setuptools-77.patch
 
 Obsoletes:      setools < 4.0.0, setools-devel < 4.0.0
-BuildRequires:  flex,  bison
 BuildRequires:  glibc-devel, gcc, git-core
-BuildRequires:  libsepol-devel >= %{sepol_ver}, libsepol-static >= %{sepol_ver}
-BuildRequires:  swig
+BuildRequires:  libsepol-devel >= %{sepol_ver}
 BuildRequires:  python3-Cython
 BuildRequires:  python3-devel
 BuildRequires:  libselinux-devel
@@ -89,6 +89,20 @@ Requires:    python3-networkx
 SETools is a collection of graphical tools, command-line tools, and
 Python modules designed to facilitate SELinux policy analysis.
 
+%if %{defined with_mcp}
+%package     mcp
+Summary:     Policy analysis MCP server
+License:     GPL-2.0-only
+Requires:    python3-setools = %{version}-%{release}
+Requires:    python3-fastmcp
+
+%description mcp
+SETools is a collection of graphical tools, command-line tools, and
+libraries designed to facilitate SELinux policy analysis.
+
+This package includes MCP server.
+%endif
+
 
 %prep
 %autosetup -p 1 -S git -n setools-%{version}
@@ -104,6 +118,9 @@ Python modules designed to facilitate SELinux policy analysis.
 
 %install
 %pyproject_install
+%if ! %{defined with_mcp}
+rm -f %{buildroot}%{_bindir}/setools-mcp
+%endif
 
 %check
 %if %{?_with_check:1}%{!?_with_check:0}
@@ -149,7 +166,19 @@ Python modules designed to facilitate SELinux policy analysis.
 %{_mandir}/man1/apol*
 %{_mandir}/ru/man1/apol*
 
+%if %{defined with_mcp}
+%files mcp
+%license COPYING.GPL
+%{_bindir}/setools-mcp
+%endif
+
 %changelog
+* Wed Sep 09 2026 Petr Lautrbach <lautrbach@redhat.com> - 4.7.1-1.1
+- SETools 4.7.1
+
+* Fri Jul 10 2026 Vit Mojzis <vmojzis@redhat.com> - 4.7.0-1
+- SETools 4.7.0 (RHEL-188035)
+
 * Tue Feb 17 2026 Vit Mojzis <vmojzis@redhat.com> - 4.6.0-3
 - Rebuild for SELinux userspace 3.10 (RHEL-150462)
 

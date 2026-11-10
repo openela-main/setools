@@ -1,0 +1,45 @@
+From bb029f403596872826276bc2c2d032172385dd0a Mon Sep 17 00:00:00 2001
+From: Petr Lautrbach <lautrbach@redhat.com>
+Date: Tue, 25 Aug 2026 16:31:51 +0200
+Subject: [PATCH] pyproject.toml: Fix build with setuptools < 77.
+Content-type: text/plain
+
+The PEP 639 style `project.license` SPDX string and `project.license-files`
+list require setuptools>=77. Older setuptools (e.g. 69.0.3, as shipped in
+RHEL) fail metadata validation with:
+
+    configuration error: `project.license` must be valid exactly by
+    one definition (2 matches found)
+
+Use the legacy `project.license = {text = ...}` table form and move
+`license-files` to `tool.setuptools`, which both old and new setuptools
+accept without warnings.
+---
+ pyproject.toml | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/pyproject.toml b/pyproject.toml
+index 2815a78a7859..b047477a7c87 100644
+--- a/pyproject.toml
++++ b/pyproject.toml
+@@ -9,8 +9,7 @@ name = "setools"
+ version = "4.7.1"
+ description="SELinux policy analysis tools."
+ authors = [{name = "Chris PeBenito", email="pebenito@ieee.org"}]
+-license = "LGPL-2.1-only AND GPL-2.0-only"
+-license-files = ["COPYING*"]
++license = {text = "LGPL-2.1-only AND GPL-2.0-only"}
+ readme = {file = "README.md", content-type = "text/markdown"}
+ urls.Homepage = "https://github.com/SELinuxProject/setools"
+ urls.Repository = "https://github.com/SELinuxProject/setools.git"
+@@ -50,6 +49,7 @@ optional-dependencies.test = ["tox"]
+ 
+ [tool.setuptools]
+ include-package-data = false
++license-files = ["COPYING*"]
+ script-files = ["apol",
+                 "sediff",
+                 "seinfo",
+-- 
+2.55.0
+
